@@ -29,6 +29,9 @@ class Config:
     HOST = os.getenv("HOST", "0.0.0.0")
     PORT = int(os.getenv("PORT", "8003"))
     
+    # Default KB ID
+    DEFAULT_KB_ID = os.getenv("DEFAULT_KB_ID", "default")
+    
     # Timeouts
     AZURE_CONNECTION_TIMEOUT = int(os.getenv("AZURE_CONNECTION_TIMEOUT", "10"))
     CLIENT_INIT_TIMEOUT = int(os.getenv("CLIENT_INIT_TIMEOUT", "30"))
