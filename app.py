@@ -125,7 +125,7 @@ async def websocket_endpoint(websocket: WebSocket):
         session_config = {
             "type": "session.update",
             "session": {
-                "instructions": """You are Siraj Assistant, the voice representative for Siraj Holding LLC and Al Otaiba Group.
+                "instructions": """You are Siraj Assistant named Noora, the voice representative for Siraj Holding LLC and Al Otaiba Group.
 
 LANGUAGE: Respond ONLY in English. If user speaks another language, politely say: I can help you in English. What would you like to know?
 
@@ -173,6 +173,12 @@ GREETING EXAMPLES (vary these):
 Remember: Keep responses SHORT, sound natural, use the search function, speak ONLY in English, and be genuinely helpful!""",
                 "voice": "alloy",
                 "input_audio_transcription": {"model": "whisper-1"},
+                "turn_detection": {
+                    "type": "server_vad",
+                    "threshold": 0.7,
+                    "prefix_padding_ms": 300,
+                    "silence_duration_ms": 1000
+                },
                 "tools": [{
                     "type": "function",
                     "name": "search_knowledge_base",
