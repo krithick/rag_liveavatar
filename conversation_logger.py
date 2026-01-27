@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 from typing import List, Dict
 import logging
+from database_service import DatabaseService
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class ConversationLogger:
         self.log_dir = log_dir
         self.start_time = datetime.utcnow()
         self.messages = []
+        self.db_service = DatabaseService()
         
         # Create log directory
         os.makedirs(log_dir, exist_ok=True)
@@ -53,7 +55,7 @@ class ConversationLogger:
         )
     
     def save(self, cost_summary: dict = None):
-        """Save conversation to file"""
+        """Save conversation to database and file"""
         filename = f"{self.session_id}_{self.start_time.strftime('%Y%m%d_%H%M%S')}.json"
         filepath = os.path.join(self.log_dir, filename)
         
@@ -68,14 +70,23 @@ class ConversationLogger:
             "cost": cost_summary
         }
         
+        # Save to file (backup)
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(conversation_data, f, indent=2, ensure_ascii=False)
-            logger.info(f"[CONVO] Saved to {filepath}")
+            logger.info(f"[CONVO] Saved to file: {filepath}")
+        except Exception as e:
+            logger.error(f"[CONVO] Failed to save file: {e}")
+            filepath = None
+        
+        # Save to database
+        try:
+            db_id = self.db_service.save_session(conversation_data, filepath)
+            logger.info(f"[CONVO] Saved to database: {db_id}")
             return filepath
         except Exception as e:
-            logger.error(f"[CONVO] Failed to save: {e}")
-            return None
+            logger.error(f"[CONVO] Failed to save to database: {e}")
+            return filepath
     
     def get_summary(self) -> dict:
         """Get conversation summary"""

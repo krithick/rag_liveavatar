@@ -9,13 +9,13 @@ from typing import Dict
 logger = logging.getLogger(__name__)
 
 class CostTracker:
-    # GPT-4o Realtime API Pricing (General Availability - Updated Jan 2025)
-    # Source: https://www.anthropic.com/pricing or Azure OpenAI pricing page
+    # GPT-4o Realtime API Pricing (as of Jan 2025)
+    # Source: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
     PRICES = {
         "text_input": 4.00,      # $4.00 per 1M input tokens
         "text_output": 16.00,    # $16.00 per 1M output tokens
-        "audio_input": 32.00,    # $32.00 per 1M input tokens (was $100)
-        "audio_output": 64.00    # $64.00 per 1M output tokens (was $200)
+        "audio_input": 32.00,    # $32.00 per 1M audio input tokens
+        "audio_output": 64.00    # $64.00 per 1M audio output tokens
     }
     
     def __init__(self, session_id: str):
