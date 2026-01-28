@@ -265,7 +265,21 @@ Remember: ENGLISH ONLY responses, keep it SHORT, sound natural, use search_knowl
                         usage = data.get("response", {}).get("usage")
                         if usage and cost_tracker:
                             cost_tracker.add_usage(usage)
-                    
+                            response = data.get("response", {})
+                            output_items = response.get("output", [])
+
+                            for item in output_items:
+                                role = item.get("role")
+                                content_list = item.get("content", [])
+
+                                for content in content_list:
+                                    if content.get("type") == "audio":
+                                        transcript = content.get("transcript", "")
+                                        convo_logger.log_message(role, transcript)
+                            
+                        if event_type == "conversation.item.input_audio_transcription.completed":
+                            role = item.get("role")
+                            convo_logger.log_message(role, data.get("transcript"))
                     # Log conversation events
                     if event_type == "conversation.item.created":
                         item = data.get("item", {})
