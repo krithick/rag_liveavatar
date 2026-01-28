@@ -492,7 +492,7 @@ async def get_metrics():
     """Metrics endpoint"""
     return JSONResponse(metrics.get_stats())
 
-@app.get("/")
+@app.get("/ui")
 async def get():
     try:
         with open("index.html", encoding="utf-8") as f:
