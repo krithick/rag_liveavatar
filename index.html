@@ -1,445 +1,521 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>AI Voice Assistant</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 100%;
+        height: 80vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 24px;
+        margin-bottom: 5px;
+      }
+      .status {
+        font-size: 13px;
+        opacity: 0.9;
+      }
+      .chat-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .message-wrapper {
+        display: flex;
+        margin-bottom: 15px;
+        animation: slideIn 0.3s ease;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 600px;
-            width: 100%;
-            height: 80vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
+      }
+      .message-wrapper.user {
+        justify-content: flex-end;
+      }
+      .message-wrapper.assistant {
+        justify-content: flex-start;
+      }
+      .message {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        font-size: 14px;
+        line-height: 1.4;
+        position: relative;
+      }
+      .message.user {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+      .message.assistant {
+        background: white;
+        color: #333;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .message.system {
+        background: #fff3cd;
+        color: #856404;
+        font-size: 12px;
+        text-align: center;
+        max-width: 80%;
+        margin: 0 auto;
+        border-radius: 12px;
+      }
+      .typing-indicator {
+        display: none;
+        padding: 12px 16px;
+        background: white;
+        border-radius: 18px;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        width: fit-content;
+      }
+      .typing-indicator.show {
+        display: block;
+      }
+      .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background: #999;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 2px;
+        animation: bounce 1.4s infinite;
+      }
+      .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes bounce {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
         }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+        30% {
+          transform: translateY(-10px);
         }
-        .status {
-            font-size: 13px;
-            opacity: 0.9;
+      }
+      .controls {
+        padding: 20px;
+        background: white;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+      }
+      .mic-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+      .mic-button:hover:not(:disabled) {
+        transform: scale(1.1);
+      }
+      .mic-button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+      .mic-button.active {
+        animation: pulse 1.5s infinite;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
         }
-        .chat-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #f5f5f5;
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 4px 25px rgba(240, 147, 251, 0.6);
         }
-        .message-wrapper {
-            display: flex;
-            margin-bottom: 15px;
-            animation: slideIn 0.3s ease;
+      }
+      .listening-indicator {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        color: #f5576c;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .listening-indicator.show {
+        display: flex;
+      }
+      .listening-indicator .wave {
+        width: 3px;
+        height: 15px;
+        background: #f5576c;
+        border-radius: 3px;
+        animation: wave 1s infinite;
+      }
+      .listening-indicator .wave:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      .listening-indicator .wave:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+      .listening-indicator .wave:nth-child(4) {
+        animation-delay: 0.3s;
+      }
+      @keyframes wave {
+        0%,
+        100% {
+          height: 15px;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        50% {
+          height: 25px;
         }
-        .message-wrapper.user {
-            justify-content: flex-end;
-        }
-        .message-wrapper.assistant {
-            justify-content: flex-start;
-        }
-        .message {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.4;
-            position: relative;
-        }
-        .message.user {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-        .message.assistant {
-            background: white;
-            color: #333;
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .message.system {
-            background: #fff3cd;
-            color: #856404;
-            font-size: 12px;
-            text-align: center;
-            max-width: 80%;
-            margin: 0 auto;
-            border-radius: 12px;
-        }
-        .typing-indicator {
-            display: none;
-            padding: 12px 16px;
-            background: white;
-            border-radius: 18px;
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            width: fit-content;
-        }
-        .typing-indicator.show {
-            display: block;
-        }
-        .typing-indicator span {
-            height: 8px;
-            width: 8px;
-            background: #999;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 0 2px;
-            animation: bounce 1.4s infinite;
-        }
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes bounce {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
-        }
-        .controls {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-        .mic-button {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: none;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-        .mic-button:hover:not(:disabled) {
-            transform: scale(1.1);
-        }
-        .mic-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .mic-button.active {
-            animation: pulse 1.5s infinite;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4); }
-            50% { transform: scale(1.05); box-shadow: 0 4px 25px rgba(240, 147, 251, 0.6); }
-        }
-        .listening-indicator {
-            display: none;
-            align-items: center;
-            gap: 8px;
-            color: #f5576c;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .listening-indicator.show {
-            display: flex;
-        }
-        .listening-indicator .wave {
-            width: 3px;
-            height: 15px;
-            background: #f5576c;
-            border-radius: 3px;
-            animation: wave 1s infinite;
-        }
-        .listening-indicator .wave:nth-child(2) { animation-delay: 0.1s; }
-        .listening-indicator .wave:nth-child(3) { animation-delay: 0.2s; }
-        .listening-indicator .wave:nth-child(4) { animation-delay: 0.3s; }
-        @keyframes wave {
-            0%, 100% { height: 15px; }
-            50% { height: 25px; }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>🎙️ AI Voice Assistant</h1>
-            <div class="status" id="statusText">Click microphone to start</div>
+      <div class="header">
+        <h1>🎙️ AI Voice Assistant</h1>
+        <div class="status" id="statusText">Click microphone to start</div>
+      </div>
+
+      <div class="chat-area" id="chatArea">
+        <div class="message-wrapper">
+          <div class="message system">
+            👋 Welcome! Click the microphone and start speaking
+          </div>
         </div>
-        
-        <div class="chat-area" id="chatArea">
-            <div class="message-wrapper">
-                <div class="message system">👋 Welcome! Click the microphone and start speaking</div>
-            </div>
+      </div>
+
+      <div class="controls">
+        <div class="listening-indicator" id="listeningIndicator">
+          <div class="wave"></div>
+          <div class="wave"></div>
+          <div class="wave"></div>
+          <div class="wave"></div>
+          <span>Listening...</span>
         </div>
-        
-        <div class="controls">
-            <div class="listening-indicator" id="listeningIndicator">
-                <div class="wave"></div>
-                <div class="wave"></div>
-                <div class="wave"></div>
-                <div class="wave"></div>
-                <span>Listening...</span>
-            </div>
-            <button class="mic-button" id="micBtn" onclick="toggleConnection()">🎤</button>
-        </div>
+        <button class="mic-button" id="micBtn" onclick="toggleConnection()">
+          🎤
+        </button>
+      </div>
     </div>
-    
+
     <script>
-        // Configuration - Put your KB ID here
-        const KB_ID = 'kb_c7bd4024-029f-447a-b28c-90d08281687f';
-        
-        let ws = null;
-        let audioContext = null;
-        let mediaStream = null;
-        let nextPlayTime = 0;
-        let isNewResponse = true;
-        let activeSources = [];
-        let isConnected = false;
-        let isListening = false;
-        let isSpeaking = false;
-        
-        function addMessage(text, type = 'system') {
-            const chatArea = document.getElementById('chatArea');
-            
-            // Remove typing indicator if exists
-            const typingIndicator = document.getElementById('typingIndicator');
-            if (typingIndicator) typingIndicator.remove();
-            
-            const wrapper = document.createElement('div');
-            wrapper.className = `message-wrapper ${type}`;
-            
-            const msg = document.createElement('div');
-            msg.className = `message ${type}`;
-            msg.textContent = text;
-            
-            wrapper.appendChild(msg);
-            chatArea.appendChild(wrapper);
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }
-        
-        function showTypingIndicator() {
-            const chatArea = document.getElementById('chatArea');
-            const existing = document.getElementById('typingIndicator');
-            if (existing) return;
-            
-            const wrapper = document.createElement('div');
-            wrapper.className = 'message-wrapper assistant';
-            wrapper.id = 'typingIndicator';
-            
-            const indicator = document.createElement('div');
-            indicator.className = 'typing-indicator show';
-            indicator.innerHTML = '<span></span><span></span><span></span>';
-            
-            wrapper.appendChild(indicator);
-            chatArea.appendChild(wrapper);
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }
-        
-        function updateStatus(text) {
-            document.getElementById('statusText').textContent = text;
-        }
-        
-        function playAudioChunk(base64Audio) {
-            try {
-                const binaryString = atob(base64Audio);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-                
-                const pcm16 = new Int16Array(bytes.buffer);
-                const float32 = new Float32Array(pcm16.length);
-                for (let i = 0; i < pcm16.length; i++) {
-                    float32[i] = pcm16[i] / 32768.0;
-                }
-                
-                const audioBuffer = audioContext.createBuffer(1, float32.length, 24000);
-                audioBuffer.getChannelData(0).set(float32);
-                
-                const source = audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioContext.destination);
-                
-                // Schedule playback
-                const currentTime = audioContext.currentTime;
-                if (isNewResponse || nextPlayTime < currentTime) {
-                    nextPlayTime = currentTime;
-                    isNewResponse = false;
-                }
-                
-                source.start(nextPlayTime);
-                nextPlayTime += audioBuffer.duration;
-                
-                // Track active source
-                activeSources.push(source);
-                source.onended = () => {
-                    const index = activeSources.indexOf(source);
-                    if (index > -1) activeSources.splice(index, 1);
-                };
-                
-            } catch (e) {
-                console.error('Audio playback error:', e);
+      // Configuration - Put your KB ID here
+      const KB_ID = "kb_c7bd4024-029f-447a-b28c-90d08281687f";
+
+      let ws = null;
+      let audioContext = null;
+      let mediaStream = null;
+      let nextPlayTime = 0;
+      let isNewResponse = true;
+      let activeSources = [];
+      let isConnected = false;
+      let isListening = false;
+      let isSpeaking = false;
+
+      function addMessage(text, type = "system") {
+        const chatArea = document.getElementById("chatArea");
+
+        // Remove typing indicator if exists
+        const typingIndicator = document.getElementById("typingIndicator");
+        if (typingIndicator) typingIndicator.remove();
+
+        const wrapper = document.createElement("div");
+        wrapper.className = `message-wrapper ${type}`;
+
+        const msg = document.createElement("div");
+        msg.className = `message ${type}`;
+        msg.textContent = text;
+
+        wrapper.appendChild(msg);
+        chatArea.appendChild(wrapper);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+
+      function showTypingIndicator() {
+        const chatArea = document.getElementById("chatArea");
+        const existing = document.getElementById("typingIndicator");
+        if (existing) return;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "message-wrapper assistant";
+        wrapper.id = "typingIndicator";
+
+        const indicator = document.createElement("div");
+        indicator.className = "typing-indicator show";
+        indicator.innerHTML = "<span></span><span></span><span></span>";
+
+        wrapper.appendChild(indicator);
+        chatArea.appendChild(wrapper);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+
+      function updateStatus(text) {
+        document.getElementById("statusText").textContent = text;
+      }
+
+      function playAudioChunk(base64Audio) {
+        try {
+          const binaryString = atob(base64Audio);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+
+          const pcm16 = new Int16Array(bytes.buffer);
+          const float32 = new Float32Array(pcm16.length);
+          for (let i = 0; i < pcm16.length; i++) {
+            float32[i] = pcm16[i] / 32768.0;
+          }
+
+          const audioBuffer = audioContext.createBuffer(
+            1,
+            float32.length,
+            24000,
+          );
+          audioBuffer.getChannelData(0).set(float32);
+
+          const source = audioContext.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(audioContext.destination);
+
+          // Schedule playback
+          const currentTime = audioContext.currentTime;
+          if (isNewResponse || nextPlayTime < currentTime) {
+            nextPlayTime = currentTime;
+            isNewResponse = false;
+          }
+
+          source.start(nextPlayTime);
+          nextPlayTime += audioBuffer.duration;
+
+          // Track active source
+          activeSources.push(source);
+          source.onended = () => {
+            const index = activeSources.indexOf(source);
+            if (index > -1) activeSources.splice(index, 1);
+
+            // Check if all audio finished playing
+            if (activeSources.length === 0) {
+              console.log("All audio playback complete");
+              isListening = true;
+              isSpeaking = false;
+              document
+                .getElementById("listeningIndicator")
+                .classList.add("show");
             }
+          };
+        } catch (e) {
+          console.error("Audio playback error:", e);
         }
-        
-        function stopAllAudio() {
-            // Stop all currently playing audio
-            activeSources.forEach(source => {
-                try {
-                    source.stop();
-                } catch (e) {}
-            });
-            activeSources = [];
-            nextPlayTime = 0;
-            isNewResponse = true;
-        }
-        
-        async function connect() {
-            try {
-                updateStatus('Connecting...');
-                
+      }
+
+      function stopAllAudio() {
+        // Stop all currently playing audio
+        activeSources.forEach((source) => {
+          try {
+            source.stop();
+          } catch (e) {}
+        });
+        activeSources = [];
+        nextPlayTime = 0;
+        isNewResponse = true;
+      }
+
+      async function connect() {
+        try {
+          updateStatus("Connecting...");
+
           ws = new WebSocket("wss://devimmerz.novactech.in/rag/ws");
-                
-                ws.onopen = async () => {
-                    ws.send(JSON.stringify({ kb_id: KB_ID }));
-                    
-                    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    addMessage('Connected! Start speaking...', 'system');
-                    
-                    audioContext = new AudioContext({ sampleRate: 24000 });
-                    const source = audioContext.createMediaStreamSource(mediaStream);
-                    const processor = audioContext.createScriptProcessor(4096, 1, 1);
-                    
-                    processor.onaudioprocess = (e) => {
-                        if (ws.readyState === WebSocket.OPEN) {
-                            const inputData = e.inputBuffer.getChannelData(0);
-                            const pcm16 = new Int16Array(inputData.length);
-                            for (let i = 0; i < inputData.length; i++) {
-                                pcm16[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
-                            }
-                            
-                            ws.send(JSON.stringify({
-                                type: 'input_audio_buffer.append',
-                                audio: btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)))
-                            }));
-                        }
-                    };
-                    
-                    source.connect(processor);
-                    processor.connect(audioContext.destination);
-                    
-                    updateStatus('🎤 Connected - Speak now!');
-                    document.getElementById('micBtn').classList.add('active');
-                    document.getElementById('listeningIndicator').classList.add('show');
-                    isConnected = true;
-                    isListening = true;
-                };
-                
-                ws.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    const type = data.type;
-                    
-                    if (type === 'response.created') {
-                        stopAllAudio();
-                        showTypingIndicator();
-                        isSpeaking = true;
-                    }
-                    
-                    if (type === 'response.function_call_arguments.done') {
-                        const args = JSON.parse(data.arguments || '{}');
-                        addMessage(`🔍 Searching: ${args.query}`, 'system');
-                    }
-                    
-                    if (type === 'response.audio.delta' && data.delta) {
-                        playAudioChunk(data.delta);
-                    }
-                    
-                    if (type === 'conversation.item.input_audio_transcription.completed') {
-                        addMessage(data.transcript, 'user');
-                        isListening = false;
-                        document.getElementById('listeningIndicator').classList.remove('show');
-                    }
-                    
-                    if (type === 'response.audio_transcript.done') {
-                        addMessage(data.transcript, 'assistant');
-                        isSpeaking = false;
-                        isListening = true;
-                        document.getElementById('listeningIndicator').classList.add('show');
-                    }
-                    
-                    if (type === 'error') {
-                        addMessage(`Error: ${data.error.message}`, 'system');
-                    }
-                };
-                
-                ws.onerror = (error) => {
-                    addMessage('Connection error', 'system');
-                    console.error(error);
-                };
-                
-                ws.onclose = () => {
-                    disconnect();
-                };
-                
-            } catch (error) {
-                addMessage(`Error: ${error.message}`, 'system');
-                updateStatus('Connection failed');
+          //ws = new WebSocket("ws://localhost:8003/ws");
+
+          ws.onopen = async () => {
+            ws.send(JSON.stringify({ kb_id: KB_ID }));
+
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            });
+            addMessage("Connected! Start speaking...", "system");
+
+            audioContext = new AudioContext({ sampleRate: 24000 });
+            const source = audioContext.createMediaStreamSource(mediaStream);
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+            processor.onaudioprocess = (e) => {
+              if (ws.readyState === WebSocket.OPEN && !isSpeaking) {
+                const inputData = e.inputBuffer.getChannelData(0);
+                const pcm16 = new Int16Array(inputData.length);
+                for (let i = 0; i < inputData.length; i++) {
+                  pcm16[i] = Math.max(
+                    -32768,
+                    Math.min(32767, inputData[i] * 32768),
+                  );
+                }
+                ws.send(
+                  JSON.stringify({
+                    type: "input_audio_buffer.append",
+                    audio: btoa(
+                      String.fromCharCode(...new Uint8Array(pcm16.buffer)),
+                    ),
+                  }),
+                );
+              }
+            };
+
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+
+            updateStatus("🎤 Connected - Speak now!");
+            document.getElementById("micBtn").classList.add("active");
+            document.getElementById("listeningIndicator").classList.add("show");
+            isConnected = true;
+            isListening = true;
+          };
+
+          ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const type = data.type;
+
+            if (type === "response.created") {
+              stopAllAudio();
+              showTypingIndicator();
+              isSpeaking = true;
+              document
+                .getElementById("listeningIndicator")
+                .classList.remove("show");
             }
+
+            if (type === "response.function_call_arguments.done") {
+              const args = JSON.parse(data.arguments || "{}");
+              addMessage(`🔍 Searching: ${args.query}`, "system");
+            }
+
+            if (type === "response.audio.delta" && data.delta) {
+              playAudioChunk(data.delta);
+            }
+
+            if (
+              type === "conversation.item.input_audio_transcription.completed"
+            ) {
+              addMessage(data.transcript, "user");
+              isListening = false;
+              document
+                .getElementById("listeningIndicator")
+                .classList.remove("show");
+            }
+
+            if (type === "response.audio_transcript.done") {
+              addMessage(data.transcript, "assistant");
+            }
+
+            if (type === "response.done") {
+              // isSpeaking = false;
+              // Don't enable listening here - wait for audio to finish playing
+            }
+
+            if (type === "error") {
+              addMessage(`Error: ${data.error.message}`, "system");
+            }
+          };
+
+          ws.onerror = (error) => {
+            addMessage("Connection error", "system");
+            console.error(error);
+          };
+
+          ws.onclose = () => {
+            disconnect();
+          };
+        } catch (error) {
+          addMessage(`Error: ${error.message}`, "system");
+          updateStatus("Connection failed");
         }
-        
-        function toggleConnection() {
-            if (isConnected) {
-                disconnect();
-            } else {
-                connect();
-            }
+      }
+
+      function toggleConnection() {
+        if (isConnected) {
+          disconnect();
+        } else {
+          connect();
         }
-        
-        function disconnect() {
-            if (ws) {
-                ws.close();
-                ws = null;
-            }
-            
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                mediaStream = null;
-            }
-            
-            if (audioContext) {
-                audioContext.close();
-                audioContext = null;
-            }
-            
-            stopAllAudio();
-            
-            updateStatus('Click microphone to start');
-            document.getElementById('micBtn').classList.remove('active');
-            document.getElementById('listeningIndicator').classList.remove('show');
-            isConnected = false;
-            isListening = false;
-            isSpeaking = false;
-            
-            addMessage('Disconnected', 'system');
+      }
+
+      function disconnect() {
+        if (ws) {
+          // Send close signal before closing
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "session.close" }));
+          }
+          ws.close(1000, "User disconnected");
+          ws = null;
         }
+
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          mediaStream = null;
+        }
+
+        if (audioContext) {
+          audioContext.close();
+          audioContext = null;
+        }
+
+        stopAllAudio();
+
+        updateStatus("Click microphone to start");
+        document.getElementById("micBtn").classList.remove("active");
+        document.getElementById("listeningIndicator").classList.remove("show");
+        isConnected = false;
+        isListening = false;
+        isSpeaking = false;
+
+        addMessage("Disconnected", "system");
+      }
     </script>
-</body>
+  </body>
 </html>
