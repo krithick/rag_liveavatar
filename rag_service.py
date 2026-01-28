@@ -67,10 +67,10 @@ class DynamicRAG:
                         top=top_k
                     )
                     
-                    chunks = [r["content"][:400] for r in results if "content" in r]
+                    chunks = [r["content"][:800] for r in results if "content" in r]  # Increased from 400 to 800 chars
                     if chunks:
                         logger.info(f"[RAG] Found {len(chunks)} chunks")
-                        return "\n".join(f"- {c}" for c in chunks)
+                        return "\n\n".join(f"{c}" for c in chunks)  # More readable format
                 except AzureError as e:
                     logger.error(f"[RAG] Search failed for {kb_variant}: {e}")
                     continue
