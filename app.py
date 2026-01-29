@@ -495,7 +495,14 @@ async def get():
             return HTMLResponse(f.read())
     except FileNotFoundError:
         return HTMLResponse("<h1>index.html not found</h1>", status_code=500)
-
+    
+@app.get("/ui/data")
+async def get():
+    try:
+        with open("data.html", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+    except FileNotFoundError:
+        return HTMLResponse("<h1>index.html not found</h1>", status_code=500)
 if __name__ == "__main__":
     import uvicorn
     logger.info(f"Starting server in {Config.ENV} environment")
