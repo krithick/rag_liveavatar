@@ -27,7 +27,7 @@ class Config:
     
     # Server
     HOST = os.getenv("HOST", "0.0.0.0")
-    PORT = int(os.getenv("PORT", "8003"))
+    PORT = int(os.getenv("PORT", "8004"))
     
     # Default KB ID
     DEFAULT_KB_ID = os.getenv("DEFAULT_KB_ID", "default")
