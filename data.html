@@ -371,7 +371,7 @@
         try {
           updateStatus("Connecting...");
 
-          ws = new WebSocket("wss://devimmerz.novactech.in/rag/ws");
+          ws = new WebSocket("wss://devimmerz.novactech.in/event/ws");
           //ws = new WebSocket("ws://localhost:8003/ws");
 
           ws.onopen = async () => {
