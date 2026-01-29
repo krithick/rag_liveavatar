@@ -35,7 +35,7 @@ class DynamicRAG:
             logger.error(f"Failed to initialize OpenAI client: {e}")
             raise
     
-    def search(self, query: str, kb_id: str, top_k: int = 3) -> Optional[str]:
+    def search(self, query: str, kb_id: str, top_k: int = 5) -> Optional[str]:
         """Search KB and return formatted context with retry"""
         if not query or not kb_id:
             logger.warning("[RAG] Empty query or KB ID")
@@ -67,7 +67,7 @@ class DynamicRAG:
                         top=top_k
                     )
                     
-                    chunks = [r["content"][:800] for r in results if "content" in r]  # Increased from 400 to 800 chars
+                    chunks = [r["content"] for r in results]  # Increased from 400 to 800 chars
                     if chunks:
                         logger.info(f"[RAG] Found {len(chunks)} chunks")
                         return "\n\n".join(f"{c}" for c in chunks)  # More readable format
