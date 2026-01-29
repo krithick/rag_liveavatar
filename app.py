@@ -496,7 +496,7 @@ async def get():
     except FileNotFoundError:
         return HTMLResponse("<h1>index.html not found</h1>", status_code=500)
     
-@app.get("/ui/data")
+@app.get("/data")
 async def get():
     try:
         with open("data.html", encoding="utf-8") as f:
