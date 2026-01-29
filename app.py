@@ -259,9 +259,9 @@ Remember: Keep it SHORT, use search function, speak ONLY in English, be enthusia
                                         transcript = content.get("transcript", "")
                                         convo_logger.log_message(role, transcript)
                             
-                        if event_type == "conversation.item.input_audio_transcription.completed":
-                            role = item.get("role")
-                            convo_logger.log_message(role, data.get("transcript"))
+                    if event_type == "conversation.item.input_audio_transcription.completed":
+                        role = item.get("role")
+                        convo_logger.log_message(role, data.get("transcript"))
                     # Log conversation events
                     if event_type == "conversation.item.created":
                         item = data.get("item", {})
