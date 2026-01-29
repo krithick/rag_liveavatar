@@ -488,13 +488,13 @@ async def get_metrics():
     """Metrics endpoint"""
     return JSONResponse(metrics.get_stats())
 
-@app.get("/ui")
-async def get():
-    try:
-        with open("index.html", encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-    except FileNotFoundError:
-        return HTMLResponse("<h1>index.html not found</h1>", status_code=500)
+# @app.get("/ui")
+# async def get():
+#     try:
+#         with open("index.html", encoding="utf-8") as f:
+#             return HTMLResponse(f.read())
+#     except FileNotFoundError:
+#         return HTMLResponse("<h1>index.html not found</h1>", status_code=500)
     
 @app.get("/data")
 async def get():
