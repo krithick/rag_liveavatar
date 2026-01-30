@@ -472,8 +472,8 @@
           // Hide scenario selector
           document.getElementById("scenarioSelector").classList.add("hidden");
 
-          //const wsUrl = `wss://devimmerz.novactech.in/event/ws?scenario=${selectedScenario}`;
-          const wsUrl = `ws://localhost:8004/ws?scenario=${selectedScenario}`;
+          const wsUrl = `wss://devimmerz.novactech.in/event/ws?scenario=${selectedScenario}`;
+          //const wsUrl = `ws://localhost:8004/ws?scenario=${selectedScenario}`;
           ws = new WebSocket(wsUrl);
 
           ws.onopen = async () => {
