@@ -302,7 +302,7 @@
       // Load scenarios on page load
       async function loadScenarios() {
         try {
-          const response = await fetch("/scenarios");
+          const response = await fetch("/event/scenarios");
           const data = await response.json();
           scenarios = data.scenarios;
 
