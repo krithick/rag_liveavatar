@@ -479,10 +479,26 @@
           ws.onopen = async () => {
             ws.send(JSON.stringify({ kb_id: KB_ID }));
 
+            // Send initial hello message to start conversation
+            setTimeout(() => {
+              ws.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                  type: "message",
+                  role: "user",
+                  content: [{
+                    type: "input_text",
+                    text: "Hello"
+                  }]
+                }
+              }));
+              ws.send(JSON.stringify({ type: "response.create" }));
+            }, 500);
+
             mediaStream = await navigator.mediaDevices.getUserMedia({
               audio: true,
             });
-            addMessage("Connected! Start speaking...", "system");
+            addMessage("Connected! AI will greet you...", "system");
 
             audioContext = new AudioContext({ sampleRate: 24000 });
             const source = audioContext.createMediaStreamSource(mediaStream);
