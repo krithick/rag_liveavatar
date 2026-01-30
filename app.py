@@ -106,6 +106,9 @@ async def websocket_endpoint(websocket: WebSocket, scenario: str = Query(None)):
         metrics.increment("ws_connections")
         logger.info(f"[WS] Client connected - Session: {session_id}")
         
+        # Send session_id to client
+        await websocket.send_json({"type": "session.created", "session_id": session_id})
+        
         # Get scenario configuration
         scenario_config = None
         kb_id = None

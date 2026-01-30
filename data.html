@@ -543,6 +543,11 @@
             const data = JSON.parse(event.data);
             const type = data.type;
 
+            if (type === "session.created") {
+              currentSessionId = data.session_id;
+              console.log("Session ID:", currentSessionId);
+            }
+
             if (type === "response.created") {
               stopAllAudio();
               showTypingIndicator();
