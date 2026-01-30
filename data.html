@@ -292,6 +292,9 @@
         <button class="mic-button" id="micBtn" onclick="toggleConnection()">
           🎤
         </button>
+        <button class="mic-button" id="reportBtn" onclick="generateReport()" style="display:none; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%)">
+          📊
+        </button>
       </div>
     </div>
 
@@ -350,6 +353,7 @@
       let isConnected = false;
       let isListening = false;
       let isSpeaking = false;
+      let currentSessionId = null;
 
       function addMessage(text, type = "system") {
         const chatArea = document.getElementById("chatArea");
@@ -625,8 +629,11 @@
 
         stopAllAudio();
 
-        // Show scenario selector again
+        // Show scenario selector and report button
         document.getElementById("scenarioSelector").classList.remove("hidden");
+        if (currentSessionId) {
+          document.getElementById("reportBtn").style.display = "block";
+        }
 
         updateStatus("Select scenario to start");
         document.getElementById("micBtn").classList.remove("active");
@@ -636,6 +643,32 @@
         isSpeaking = false;
 
         addMessage("Disconnected", "system");
+      }
+
+      async function generateReport() {
+        if (!currentSessionId) {
+          addMessage("No session to report", "system");
+          return;
+        }
+        
+        try {
+          addMessage("Generating report...", "system");
+          const response = await fetch(`/event/api/reports/session/${currentSessionId}`);
+          const report = await response.json();
+          
+          // Download as JSON
+          const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `report_${currentSessionId}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          addMessage(`Report downloaded: ${report.total_messages} messages`, "system");
+        } catch (error) {
+          addMessage(`Report failed: ${error.message}`, "system");
+        }
       }
     </script>
   </body>

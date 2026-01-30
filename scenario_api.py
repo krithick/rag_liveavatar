@@ -18,12 +18,14 @@ class ScenarioCreate(BaseModel):
     system_prompt: str
     kb_id: Optional[str] = None
     enable_rag: bool = True
+    voice: str = "alloy"
 
 class ScenarioUpdate(BaseModel):
     name: Optional[str] = None
     system_prompt: Optional[str] = None
     kb_id: Optional[str] = None
     enable_rag: Optional[bool] = None
+    voice: Optional[str] = None
 
 @router.get("")
 async def list_scenarios():
@@ -104,6 +106,8 @@ async def update_scenario(scenario_id: str, updates: ScenarioUpdate):
             update_data["system_prompt"] = updates.system_prompt
         if updates.enable_rag is not None:
             update_data["enable_rag"] = updates.enable_rag
+        if updates.voice is not None:
+            update_data["voice"] = updates.voice
         # Always include kb_id even if None (to allow clearing)
         if "kb_id" in updates.__fields_set__:
             update_data["kb_id"] = updates.kb_id

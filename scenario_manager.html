@@ -212,6 +212,20 @@
         </div>
         
         <div class="form-group">
+          <label class="form-label">Voice *</label>
+          <select class="form-control" id="voice" required>
+            <option value="alloy">Alloy</option>
+            <option value="ash">Ash</option>
+            <option value="ballad">Ballad</option>
+            <option value="coral">Coral</option>
+            <option value="echo">Echo</option>
+            <option value="sage">Sage</option>
+            <option value="shimmer">Shimmer</option>
+            <option value="verse">Verse</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
           <label class="form-check">
             <input type="checkbox" id="enableRag" checked>
             <span>Enable RAG (Knowledge Base Search)</span>
@@ -267,6 +281,10 @@
                 <span class="detail-value">${s.kb_id || 'None'}</span>
               </div>
               <div class="detail-row">
+                <span class="detail-label">Voice:</span>
+                <span class="detail-value">${s.voice || 'alloy'}</span>
+              </div>
+              <div class="detail-row">
                 <span class="detail-label">RAG:</span>
                 <span class="badge ${s.enable_rag ? 'badge-success' : 'badge-danger'}">
                   ${s.enable_rag ? 'Enabled' : 'Disabled'}
@@ -304,6 +322,7 @@
       document.getElementById('scenarioId').disabled = true;
       document.getElementById('scenarioName').value = scenario.name;
       document.getElementById('kbId').value = scenario.kb_id || '';
+      document.getElementById('voice').value = scenario.voice || 'alloy';
       document.getElementById('enableRag').checked = scenario.enable_rag;
       document.getElementById('systemPrompt').value = scenario.system_prompt || '';
       document.getElementById('scenarioModal').classList.add('show');
@@ -321,6 +340,7 @@
         scenario_id: document.getElementById('scenarioId').value,
         name: document.getElementById('scenarioName').value,
         kb_id: kbValue || null,
+        voice: document.getElementById('voice').value,
         enable_rag: document.getElementById('enableRag').checked,
         system_prompt: document.getElementById('systemPrompt').value
       };

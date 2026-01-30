@@ -18,6 +18,7 @@ from cost_tracker import CostTracker
 from conversation_logger import ConversationLogger
 from scenario_service import get_scenario
 from scenario_api import router as scenario_router
+from report_api import router as report_router
 import logging
 import uuid
 
@@ -40,6 +41,7 @@ app.add_middleware(
 
 # Include API routers
 app.include_router(scenario_router)
+app.include_router(report_router)
 
 rag = None  # Lazy load
 
@@ -218,7 +220,7 @@ Remember: Keep it SHORT, use search function, speak ONLY in English, be enthusia
             "type": "session.update",
             "session": {
                 "instructions": system_prompt or default_prompt,
-                "voice": "alloy",
+                "voice": scenario_config.get("voice", "alloy") if scenario_config else "alloy",
                 "input_audio_transcription": {"model": "whisper-1"},
                 "turn_detection": {
                     "type": "server_vad",
