@@ -5,7 +5,7 @@ import os
 import asyncio
 import json
 import base64
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 import websockets
@@ -16,6 +16,8 @@ from monitoring import metrics
 from resilience import retry_async, azure_circuit, init_circuit_breakers
 from cost_tracker import CostTracker
 from conversation_logger import ConversationLogger
+from scenario_service import get_scenario
+from scenario_api import router as scenario_router
 import logging
 import uuid
 
@@ -35,6 +37,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routers
+app.include_router(scenario_router)
 
 rag = None  # Lazy load
 
@@ -88,7 +93,7 @@ async def connect_to_azure_realtime(kb_id: str):
         raise
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, scenario: str = Query(None)):
     azure_ws = None
     session_id = str(uuid.uuid4())
     cost_tracker = None
@@ -99,11 +104,28 @@ async def websocket_endpoint(websocket: WebSocket):
         metrics.increment("ws_connections")
         logger.info(f"[WS] Client connected - Session: {session_id}")
         
-        # Get KB ID with timeout (use default if not provided)
-        init_msg = await asyncio.wait_for(websocket.receive_json(), timeout=Config.CLIENT_INIT_TIMEOUT)
-        kb_id = init_msg.get("kb_id", Config.DEFAULT_KB_ID).strip() or Config.DEFAULT_KB_ID
+        # Get scenario configuration
+        scenario_config = None
+        kb_id = None
+        system_prompt = None
+        enable_rag = True
         
-        logger.info(f"[WS] KB ID: {kb_id}")
+        if scenario:
+            scenario_config = await get_scenario(scenario)
+            if scenario_config:
+                kb_id = scenario_config.get("kb_id")
+                system_prompt = scenario_config.get("system_prompt")
+                enable_rag = scenario_config.get("enable_rag", True) and kb_id is not None
+                logger.info(f"[WS] Scenario: {scenario} - RAG: {enable_rag} - KB: {kb_id or 'None'}")
+            else:
+                logger.warning(f"[WS] Scenario not found: {scenario}, using defaults")
+        
+        # Get KB ID from client message (fallback)
+        init_msg = await asyncio.wait_for(websocket.receive_json(), timeout=Config.CLIENT_INIT_TIMEOUT)
+        if not scenario and not kb_id:
+            kb_id = init_msg.get("kb_id", Config.DEFAULT_KB_ID).strip() or Config.DEFAULT_KB_ID
+        
+        logger.info(f"[WS] KB ID: {kb_id or 'None'}")
         
         # Initialize cost tracker and conversation logger
         cost_tracker = CostTracker(session_id)
@@ -121,11 +143,8 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.close(code=1011)
             return
         
-        # Configure session
-        session_config = {
-            "type": "session.update",
-            "session": {
-                "instructions":"""You are myCoach Assistant at the 10-year myCoach Celebration Event for Shriram Group.
+        # Configure session with scenario-specific prompt
+        default_prompt = """You are myCoach Assistant at the 10-year myCoach Celebration Event for Shriram Group.
 
 EVENT CONTEXT: This is myCoach's 10th anniversary celebration. You help visitors learn about myCoach, Shriram Finance, and the entire Shriram Group.
 
@@ -193,7 +212,13 @@ RESPONSE STYLE:
 - For Shriram Finance: Helpful and informative about products/services
 - For Shriram Group: Knowledgeable about all companies and offerings
 
-Remember: Keep it SHORT, use search function, speak ONLY in English, be enthusiastic about the 10-year milestone, and help visitors discover everything Shriram Group offers!""",               "voice": "alloy",
+Remember: Keep it SHORT, use search function, speak ONLY in English, be enthusiastic about the 10-year milestone, and help visitors discover everything Shriram Group offers!"""
+        
+        session_config = {
+            "type": "session.update",
+            "session": {
+                "instructions": system_prompt or default_prompt,
+                "voice": "alloy",
                 "input_audio_transcription": {"model": "whisper-1"},
                 "turn_detection": {
                     "type": "server_vad",
@@ -212,8 +237,8 @@ Remember: Keep it SHORT, use search function, speak ONLY in English, be enthusia
                         },
                         "required": ["query"]
                     }
-                }],
-                "tool_choice": "auto"
+                }] if enable_rag else [],
+                "tool_choice": "auto" if enable_rag else "none"
             }
         }
         
@@ -281,7 +306,7 @@ Remember: Keep it SHORT, use search function, speak ONLY in English, be enthusia
                         
                         logger.info(f"[FUNCTION] {function_name}: {args}")
                         
-                        if function_name == "search_knowledge_base":
+                        if function_name == "search_knowledge_base" and enable_rag and kb_id:
                             try:
                                 metrics.start_timer("rag_search")
                                 metrics.increment("rag_searches")
@@ -296,7 +321,6 @@ Remember: Keep it SHORT, use search function, speak ONLY in English, be enthusia
                                 logger.error(f"[RAG] Search failed: {e}")
                                 metrics.record_error("rag_search_failed")
                                 output = "Search temporarily unavailable."
-                            
                             function_result = {
                                 "type": "conversation.item.create",
                                 "item": {
@@ -488,6 +512,13 @@ async def get_metrics():
     """Metrics endpoint"""
     return JSONResponse(metrics.get_stats())
 
+@app.get("/scenarios")
+async def list_scenarios_endpoint():
+    """List all available scenarios"""
+    from scenario_service import list_scenarios
+    scenarios = await list_scenarios()
+    return JSONResponse({"scenarios": scenarios, "total": len(scenarios)})
+
 # @app.get("/ui")
 # async def get():
 #     try:
@@ -503,6 +534,15 @@ async def get():
             return HTMLResponse(f.read())
     except FileNotFoundError:
         return HTMLResponse("<h1>index.html not found</h1>", status_code=500)
+
+@app.get("/admin/scenarios")
+async def scenario_manager_ui():
+    """Scenario management UI"""
+    try:
+        with open("scenario_manager.html", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+    except FileNotFoundError:
+        return HTMLResponse("<h1>scenario_manager.html not found</h1>", status_code=500)
 if __name__ == "__main__":
     import uvicorn
     logger.info(f"Starting server in {Config.ENV} environment")
